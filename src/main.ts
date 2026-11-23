@@ -2,11 +2,12 @@ import './style.css';
 
 // #source 의 .doc-section 을 A4 시트(.sheet)로 나눠 담는다.
 // 섹션마다 새 시트에서 시작하고, 넘치는 블록은 다음 시트로 보낸다.
-// 문단·목록·표는 시트 경계에서 쪼갤 수 있고, 그 밖의 블록(코드·그림)은 통째로 옮긴다.
+// 문단·목록·표·코드는 시트 경계에서 쪼갤 수 있고, 그 밖의 블록(그림)은 통째로 옮긴다.
 // JS 가 꺼져 있으면 #source 가 한 장의 긴 종이로 그대로 보인다.
 const DOC_TITLE = '스킬과 피드백 루프로 품질 높이기';
 const SHEET_PX = (210 * 96) / 25.4;
 const MIN_LINES = 2;
+const MIN_CODE_LINES = 3;
 
 function byId<T extends HTMLElement>(id: string): T {
   const el = document.getElementById(id);
@@ -53,7 +54,7 @@ function newSheet(section: HTMLElement): HTMLElement {
 }
 
 const keepWithNext = (el: Element): boolean =>
-  /^H[23]$/.test(el.tagName) || el.classList.contains('keep-with-next');
+  /^H[2-4]$/.test(el.tagName) || el.classList.contains('keep-with-next');
 
 // 쪼갤 수 없으면 블록을 원래대로 되돌리고 null 을 돌려준다.
 function splitParagraph(p: HTMLElement, body: HTMLElement): HTMLElement | null {
@@ -124,10 +125,52 @@ function splitTable(wrap: HTMLElement, body: HTMLElement): HTMLElement | null {
   return rest;
 }
 
+const escapeHtml = (s: string): string =>
+  s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+// 코드 패널은 줄 단위로 쪼갠다. 쪼개진 조각은 data-code-group 으로 묶여 복사 버튼이 전체를 복사한다.
+let codeGroupSeq = 0;
+function splitCode(panel: HTMLElement, body: HTMLElement): HTMLElement | null {
+  const code = panel.querySelector<HTMLElement>('pre code');
+  if (!code) return null;
+  const isDiff = code.querySelector('.diff-line') !== null;
+  const lines = isDiff
+    ? [...code.children].map((el) => el.outerHTML)
+    : (code.textContent ?? '').replace(/\n$/, '').split('\n').map(escapeHtml);
+  if (lines.length < MIN_CODE_LINES * 2) return null;
+  const render = (ls: string[]): string => (isDiff ? ls.join('') : `${ls.join('\n')}\n`);
+
+  const original = code.innerHTML;
+  let lo = 0;
+  let hi = lines.length - MIN_CODE_LINES;
+  while (lo < hi) {
+    const mid = (lo + hi + 1) >> 1;
+    code.innerHTML = render(lines.slice(0, mid));
+    if (overflows(body)) hi = mid - 1;
+    else lo = mid;
+  }
+  if (lo < MIN_CODE_LINES) {
+    code.innerHTML = original;
+    return null;
+  }
+  code.innerHTML = render(lines.slice(0, lo));
+
+  const rest = panel.cloneNode(true) as HTMLElement;
+  const restCode = rest.querySelector<HTMLElement>('pre code');
+  const restLines = lines.slice(lo);
+  while (restLines.length > 1 && restLines[0]?.trim() === '') restLines.shift();
+  if (restCode) restCode.innerHTML = render(restLines);
+  panel.dataset.codeGroup ??= String(++codeGroupSeq);
+  rest.dataset.codeGroup = panel.dataset.codeGroup;
+  rest.classList.add('is-continued');
+  return rest;
+}
+
 function trySplit(block: HTMLElement, body: HTMLElement): HTMLElement | null {
   if (block instanceof HTMLParagraphElement) return splitParagraph(block, body);
   if (block instanceof HTMLUListElement || block instanceof HTMLOListElement) return splitList(block, body);
   if (block.classList.contains('table-wrap')) return splitTable(block, body);
+  if (block.classList.contains('code-panel')) return splitCode(block, body);
   return null;
 }
 
@@ -174,7 +217,15 @@ function paginateSection(section: HTMLElement): void {
     }
   };
 
-  for (const block of [...section.children] as HTMLElement[]) place(block);
+  for (const block of [...section.children] as HTMLElement[]) {
+    // <div class="page-break"></div> 는 표시만 하고 시트에 담지 않는다.
+    if (block.classList.contains('page-break')) {
+      block.remove();
+      if (body.childElementCount > 0) body = newSheet(section);
+      continue;
+    }
+    place(block);
+  }
 }
 
 function fitSheets(): void {
@@ -221,17 +272,25 @@ addEventListener('resize', () => {
 
 byId('print-action').addEventListener('click', () => window.print());
 
-for (const button of document.querySelectorAll<HTMLButtonElement>('.copy-code')) {
-  button.addEventListener('click', async () => {
-    const code = button.closest('.code-panel')?.querySelector('pre code')?.textContent ?? '';
-    try {
-      await navigator.clipboard.writeText(code);
-      button.textContent = '복사됨';
-      setTimeout(() => (button.textContent = '복사'), 1500);
-    } catch {
-      button.textContent = '선택하여 복사';
-    }
-  });
-}
+// 페이지 나눔이 코드 패널을 복제하므로 버튼마다 붙이지 않고 문서에서 위임받는다.
+document.addEventListener('click', async (event) => {
+  const button = (event.target as Element | null)?.closest<HTMLButtonElement>('.copy-code');
+  const panel = button?.closest<HTMLElement>('.code-panel');
+  if (!button || !panel) return;
+  const group = panel.dataset.codeGroup;
+  const panels = group
+    ? [...document.querySelectorAll<HTMLElement>(`.code-panel[data-code-group="${group}"]`)]
+    : [panel];
+  const code = panels
+    .map((p) => (p.querySelector<HTMLElement>('pre code')?.innerText ?? '').replace(/\n$/, ''))
+    .join('\n');
+  try {
+    await navigator.clipboard.writeText(code);
+    button.textContent = '복사됨';
+    setTimeout(() => (button.textContent = '복사'), 1500);
+  } catch {
+    button.textContent = '선택하여 복사';
+  }
+});
 
 void paginate();

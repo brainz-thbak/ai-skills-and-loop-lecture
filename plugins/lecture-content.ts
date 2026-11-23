@@ -16,7 +16,11 @@ import type { Plugin } from 'vite';
 // 본문 문법 확장:
 //   [@06]                참고 문헌 #ref-06 으로 가는 인용 링크
 //   ```lang 라벨          코드 패널 머리 라벨. 라벨이 없으면 lang 에 맞는 기본 이름
+//   ```diff              +/- 로 시작하는 줄을 추가·삭제 줄로 칠한다
 //   GFM 표               .table-wrap 으로 감싸 페이지 나눔에서 행 단위로 쪼갠다
+//   ~                    취소선으로 해석하지 않고 글자 그대로 보인다
+//   <div class="page-break"></div>   그 자리에서 다음 A4 시트로 넘긴다
+//   > [!주의] …          주의 상자(.callout--caution)로 그린다. 표시가 없는 인용은 일반 인용으로 둔다
 
 type Chapter = { id: string; title: string; num?: string; toc?: string; html: string };
 
@@ -29,10 +33,24 @@ const CODE_LABELS: Record<string, string> = {
   md: 'Markdown',
   yaml: 'YAML',
   text: 'Text',
+  tsx: 'TSX',
+  diff: 'Diff',
 };
 
 const escapeHtml = (s: string): string =>
   s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+// diff 는 줄마다 블록 span 으로 감싸 추가(+)·삭제(-) 줄에 배경을 칠한다.
+// 줄바꿈 문자를 넣지 않으므로 복사 버튼은 innerText 로 줄을 복원한다.
+function renderDiff(text: string): string {
+  return text
+    .split('\n')
+    .map((line) => {
+      const kind = line.startsWith('+') ? 'add' : line.startsWith('-') ? 'del' : 'ctx';
+      return `<span class="diff-line diff-${kind}">${escapeHtml(line) || ' '}</span>`;
+    })
+    .join('');
+}
 
 const marked = new Marked({
   gfm: true,
@@ -50,19 +68,38 @@ const marked = new Marked({
     },
   ],
   renderer: {
+    // 본문에 취소선은 쓰지 않는다. "2~3장 … 4~5장" 같은 범위 표기가 취소선으로 바뀌지 않도록 물결표를 그대로 둔다.
+    del({ raw, tokens }: Tokens.Del) {
+      const tilde = /^~+/.exec(raw)?.[0] ?? '~';
+      return `${tilde}${this.parser.parseInline(tokens)}${tilde}`;
+    },
+    blockquote({ tokens }: Tokens.Blockquote) {
+      const inner = this.parser.parse(tokens);
+      const caution = /^<p>\[!주의\]\s*/.exec(inner);
+      if (!caution) return `<blockquote>\n${inner}</blockquote>\n`;
+      return (
+        `<aside class="callout callout--caution"><span class="callout-label">주의</span>\n` +
+        `<p>${inner.slice(caution[0].length)}</aside>\n`
+      );
+    },
     code({ text, lang }: Tokens.Code) {
       const [language = 'text', ...rest] = (lang ?? '').trim().split(/\s+/);
       const label = rest.join(' ') || CODE_LABELS[language] || language;
+      const body = language === 'diff' ? renderDiff(text) : `${escapeHtml(text)}\n`;
       return (
         `<div class="code-panel"><div class="code-header"><span>${escapeHtml(label)}</span>` +
         `<button aria-label="코드 복사" class="copy-code" type="button">복사</button></div>` +
-        `<pre class="code-block"><code class="language-${escapeHtml(language)}">${escapeHtml(text)}\n</code></pre></div>\n`
+        `<pre class="code-block"><code class="language-${escapeHtml(language)}">${body}</code></pre></div>\n`
       );
     },
   },
   hooks: {
+    // 인라인 HTML(<p class="keep-with-next"> 등) 안의 [@NN] 은 마크다운 파서를 거치지 않으므로 여기서 링크로 바꾼다.
     postprocess: (html: string) =>
-      html.replace(/<table>/g, '<div class="table-wrap"><table>').replace(/<\/table>/g, '</table></div>'),
+      html
+        .replace(/<table>/g, '<div class="table-wrap"><table>')
+        .replace(/<\/table>/g, '</table></div>')
+        .replace(/\[@(\d+)\]/g, '<a class="cite" href="#ref-$1">[$1]</a>'),
   },
 });
 

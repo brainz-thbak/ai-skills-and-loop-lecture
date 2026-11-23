@@ -97,10 +97,20 @@ button { font: inherit; }
 .article h2 { font-weight:800; color:var(--ink); letter-spacing:-.05em; font-size:25px; line-height:1.36; word-break:keep-all; margin:0 0 20px; padding-bottom:14px; border-bottom:1px solid var(--hairline); scroll-margin-top:32px; }
 .chapter-index { display:block; font-family:var(--font-mono); font-size:11px; font-weight:700; letter-spacing:.14em; color:var(--accent); margin-bottom:9px; }
 .article h3 { font-weight:760; color:#273943; font-size:17px; letter-spacing:-.04em; line-height:1.48; margin:26px 0 10px; scroll-margin-top:32px; word-break:keep-all; }
+.article h4 { font-weight:760; color:#2f4650; font-size:14.5px; letter-spacing:-.03em; line-height:1.5; margin:20px 0 8px; word-break:keep-all; }
+.article h4 code { font-size:.9em; }
 .article ul,.article ol { padding-left:1.4em; margin:12px 0 16px; }
 .article li + li { margin-top:4px; }
 .article li::marker { color:#789b98; }
 .article small { color:var(--muted); }
+/* 주의 상자: 원고의 > [!주의] 블록 */
+.callout { margin:16px 0 18px; padding:11px 15px 12px; border:1px solid #ecdcc4; border-left:4px solid var(--warning); background:var(--warning-pale); border-radius:4px; }
+.callout-label { display:block; font:800 10px var(--font-mono); letter-spacing:.1em; color:var(--warning); margin-bottom:4px; }
+.callout-label::before { content:"!"; display:inline-block; width:14px; height:14px; margin-right:6px; border-radius:50%; background:var(--warning); color:#fff; font-size:9.5px; line-height:14px; text-align:center; }
+.article .callout p { margin:0; color:#5a4636; }
+.article .callout p + p { margin-top:6px; }
+.article blockquote { margin:16px 0 18px; padding:12px 16px; border-left:3px solid #84a9a2; background:#f3f7f6; color:#35505a; }
+.article blockquote p { margin:0; }
 .table-wrap { width:100%; margin:18px 0 22px; border-top:2px solid #334d51; border-bottom:1px solid var(--hairline); }
 table { width:100%; border-collapse:collapse; text-align:left; font-size:12px; line-height:1.55; }
 th { padding:9px 11px 8px; background:#edf3f2; color:#334a50; font-weight:800; border-bottom:1px solid #d9e4e1; white-space:nowrap; }
@@ -110,8 +120,12 @@ tr:nth-child(even) td { background:rgba(247,249,248,.7); }
 .code-panel { border:1px solid #d9e4e3; margin:16px 0 20px; border-radius:6px; overflow:hidden; background:#f4f8f7; }
 .code-header { display:flex; justify-content:space-between; align-items:center; min-height:32px; padding:5px 12px; border-bottom:1px solid #dce7e4; font-size:10px; font-weight:800; letter-spacing:.045em; color:#637d80; }
 .copy-code { background:transparent; border:1px solid #cadad7; border-radius:4px; padding:2px 8px; cursor:pointer; color:#577478; font-size:10px; }
+.code-panel.is-continued .code-header span::after { content:" (계속)"; font-weight:600; color:var(--faint); }
 .copy-code:hover { color:var(--accent); background:#e5f1ee; }
 pre.code-block { overflow:hidden; margin:0; padding:14px 16px; font-family:var(--font-mono); font-size:11.5px; line-height:1.65; color:#25424b; tab-size:2; white-space:pre-wrap; overflow-wrap:anywhere; }
+.diff-line { display:block; margin:0 -16px; padding:0 16px; }
+.diff-add { background:#e3f2e8; color:#1f6440; }
+.diff-del { background:#f8e6e3; color:#8f3b2c; }
 code:not(pre code) { font:.87em var(--font-mono); color:#1e5862; background:#eaf2ef; padding:.14em .32em; border-radius:3px; white-space:normal; }
 .cite { font:.75em var(--font-mono); font-weight:700; color:#227077; text-decoration:none; white-space:nowrap; padding:0 1px; }
 .cite:hover { text-decoration:underline; }
@@ -149,6 +163,37 @@ code:not(pre code) { font:.87em var(--font-mono); color:#1e5862; background:#eaf
 .stack-figure>div:last-child { border-bottom:0; }
 .stack-figure span { font:750 11.5px var(--font-mono); color:#346b71; }
 .stack-figure strong { font-size:13px; color:#455a5f; font-weight:580; }
+
+/* 판정 배지: 표·그림 안에서 통과/실패/주의/해당 없음을 표시한다. */
+.badge { display:inline-block; font:700 9.5px var(--font-mono); letter-spacing:.06em; padding:3px 7px; border-radius:3px; white-space:nowrap; vertical-align:1px; }
+.badge.pass { background:#e1f0e8; color:#2c6a50; }
+.badge.fail { background:#f7e4dc; color:#99512f; }
+.badge.warn { background:#f6eed9; color:#82652a; }
+.badge.na { background:#edf0f1; color:#66747c; }
+/* Agent Skills 명세에 없고 Codex(OpenAI)에서만 제공하는 기능 */
+.badge.codex { background:#e9e6f7; color:#4b3f8f; margin-left:5px; }
+
+/* 경로 비교: 요구사항이 가리키는 경로와 실제로 검증한 경로를 나란히 보여 준다. */
+.path-figure { background:#fff; border:1px solid var(--hairline); border-radius:6px; padding:6px 18px 16px; margin:18px 0 22px; }
+.path-row { display:grid; grid-template-columns:1fr auto; align-items:center; gap:7px 14px; padding:13px 0; border-bottom:1px dashed #dbe4e2; }
+.path-label { grid-column:1 / -1; font-size:9.5px; font-weight:800; letter-spacing:.09em; color:#718b8b; }
+.path-chain { display:flex; align-items:center; flex-wrap:wrap; gap:6px; }
+.path-node { padding:6px 10px; border-radius:4px; background:#f0f5f3; border:1px solid #dbe6e3; color:#30515a; font-size:11.5px; font-weight:700; }
+.path-node code { font:inherit; font-family:var(--font-mono); background:none; padding:0; color:inherit; }
+.path-row--req .path-node { background:#fff; border-color:#9fc3b9; }
+.path-arrow { color:#92a5a3; font-size:13px; }
+
+/* 스킬 로딩 단계: 시작 시 메타데이터 → 선택 시 본문 → 필요 시 부속 파일 */
+.tier-figure { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; background:#fff; border:1px solid var(--hairline); border-radius:6px; padding:16px 18px; margin:18px 0 22px; }
+.tier { background:#f6f9f8; border-top:3px solid var(--tier); padding:12px 13px; }
+.tier[data-tier="1"] { --tier:#b9cfcb; }
+.tier[data-tier="2"] { --tier:#6e9a96; }
+.tier[data-tier="3"] { --tier:#164c57; }
+.tier-when { display:block; font-size:9.5px; font-weight:800; letter-spacing:.06em; color:#718b8b; margin-bottom:6px; }
+.tier strong { display:block; font-size:13px; color:#2e4c53; margin-bottom:4px; }
+.tier small { display:block; font-size:10.5px; line-height:1.6; color:#667c80; }
+.tier code { font-size:.92em; }
+.tier-figure .diagram-note { grid-column:1 / -1; margin:2px 1px 0 !important; }
 
 /* References & document end */
 .article .reference-entry { padding:6px 0; margin:0; border-bottom:1px solid #e5eae8; font-size:12px; line-height:1.7; }
