@@ -57,6 +57,12 @@ toc: 참고 문헌
 <p class="reference-entry" id="ref-17"><strong><a class="cite" href="#ref-17">[17]</a> OpenAI Cookbook.</strong> <em>Iterating Development Workflows with Codex.</em><br/>
 <a href="https://developers.openai.com/cookbook/examples/codex/iterating-development-workflows-with-codex" rel="noopener noreferrer" target="_blank">https://developers.openai.com/cookbook/examples/codex/iterating-development-workflows-with-codex</a></p>
 
+<p class="reference-entry" id="ref-18"><strong><a class="cite" href="#ref-18">[18]</a> OpenAI.</strong> <em>Build skills — Codex.</em><br/>
+<a href="https://learn.chatgpt.com/docs/build-skills" rel="noopener noreferrer" target="_blank">https://learn.chatgpt.com/docs/build-skills</a></p>
+
+<p class="reference-entry" id="ref-19"><strong><a class="cite" href="#ref-19">[19]</a> Agent Skills.</strong> <em>Specification.</em><br/>
+<a href="https://agentskills.io/specification" rel="noopener noreferrer" target="_blank">https://agentskills.io/specification</a></p>
+
 <p><small>참고 문헌은 공식 도구 문서, 실무 사례, 학술 연구를 구분하여 사용했습니다. 연구에서 보고한 개선 수치를 현재 Codex의 일반적인 성공률로 환산하지 않습니다.</small></p>
 
 <footer class="footer"><span>스킬과 피드백 루프로 품질 높이기 · 강의 노트</span><span>가상의 개발 사례는 설명을 위한 예시이며 실제 성능 측정 결과가 아닙니다.</span></footer>
