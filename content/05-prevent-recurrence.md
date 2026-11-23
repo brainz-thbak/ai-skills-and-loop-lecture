@@ -1,39 +1,131 @@
 ---
 id: chapter-05
 num: "05"
-title: 현재의 오류를 수정하고, 다음 오류를 예방하려면
+title: 훅으로 검증을 작업 흐름에 묶습니다
 ---
 
-작업 중 발견한 버그를 수정하는 일과, 같은 종류의 버그가 다시 발생하지 않도록 개발 환경을 바꾸는 일은 다릅니다. 첫 번째는 현재 산출물을 고치는 것이고, 두 번째는 다음 작업의 실패 가능성을 낮추기 위한 투자입니다. 두 번째 변화는 **어떤 계층에 저장할지를 판단하는 것**부터 시작합니다.
+4장의 평가로 스킬은 나아졌지만, 결과 표가 보여 준 것은 비율입니다. v3에서도 t3는 다섯 번 중 한 번 실패했습니다. 스킬은 에이전트가 읽고 해석해서 따르는 절차이므로, 4장에서 한 줄이 잘못 읽혀 작업이 멈췄던 것처럼 언제든 다르게 따라질 수 있습니다. 서론의 Codex처럼 검증 없이 완료를 보고하는 일도 스킬만으로는 완전히 막을 수 없습니다.
 
-서론의 장면으로 돌아가 보겠습니다. 프런트엔드가 쓰는 `GET /users/:id`를 고치면 현재 작업은 끝납니다. 이런 일이 한 번뿐이라면 그것으로 충분할 수도 있습니다. 하지만 같은 역할의 엔드포인트 때문에 엉뚱한 쪽을 고치는 일이 반복된다면, 교훈을 성격에 맞는 계층에 나눠 남겨야 합니다. 어느 엔드포인트가 정식인지는 저장소에 대한 사실이므로 `AGENTS.md`나 참조 문서에 둡니다. 소비자에서 출발해 호출 경로를 찾는 순서는 스킬에 둡니다. 프런트엔드가 호출하는 엔드포인트의 응답 형식은 계약 테스트로 만들어 CI에 둡니다. 다른 호출자가 없다는 것을 확인했다면 중복 엔드포인트를 정리하거나 사용 중단으로 표시해 혼동의 원인 자체를 줄일 수도 있습니다. 기억을 많이 남기는 게 목적이 아니라 **다음 작업에서 같은 종류의 실수를 더 어렵게 만드는 것**이 목적입니다.
+매번 반드시 지켜야 하는 검사를 이 비율에 맡기지 않고, 작업하는 동안 그 자리에서 실행되게 하는 방법이 훅입니다. Codex의 훅<span class="badge codex">Codex 전용</span>은 작업 중 정해진 시점에 스크립트를 실행하는 확장 지점입니다. [@05] 스킬이 선택되었는지, 어떻게 읽혔는지와 상관없이, 파일을 고치기 직전이나 작업을 마치기 직전에 검사를 끼워 넣을 수 있습니다.
 
-### 실행 환경에서 역할을 분담합니다
-
-<div aria-label="프로젝트 지침, 스킬, 스크립트, 테스트 CI와 평가가 서로 다른 역할을 가진다는 설명" class="stack-figure" role="img">
-<div><span>AGENTS.md</span><strong>저장소의 기본 규칙과 맥락</strong></div>
-<div><span>Skill</span><strong>특정 작업의 절차와 결과 보고 형식</strong></div>
-<div><span>Scripts</span><strong>반복 가능한 실행과 증거 수집</strong></div>
-<div><span>Tests / CI</span><strong>독립적인 합격 기준과 병합 게이트</strong></div>
-<div><span>Evals</span><strong>작업 방법을 바꿨을 때의 효과 측정</strong></div>
+<div aria-label="작업 시작부터 작업 종료까지의 시간 순서에서 스킬과 훅이 각각 작동하는 시점" class="diagram" role="img">
+<div class="diagram-steps">
+<div><span class="diagram-kicker">작업 시작</span><strong>스킬</strong><small>선택되면 절차를 제공</small></div>
+<span class="diagram-arrow">→</span>
+<div><span class="diagram-kicker">파일 수정 직전</span><strong>훅</strong><small>PreToolUse: 금지된 수정 차단</small></div>
+<span class="diagram-arrow">→</span>
+<div><span class="diagram-kicker">작업 종료 직전</span><strong>훅</strong><small>Stop: 계약 테스트</small></div>
+</div>
 </div>
 
-Codex의 훅(Hooks)<span class="badge codex">Codex 전용</span>은 실행 이벤트에 검사·로깅 등의 처리를 연결하는 선택적 자동화 지점입니다. 특정 시점의 피드백을 더 빠르게 수집할 수 있지만, 핵심 보증을 훅 하나에만 의존하면 훅의 실행 조건이나 권한이 바뀌는 순간 보증이 사라질 수 있습니다. 반드시 지켜야 하는 검사는 CI 같은 별도의 검증 단계에도 두는 편이 견고합니다. 사용 가능한 이벤트와 동작은 **설치된 Codex 버전의 공식 문서로 확인**해야 합니다. [@05]
+### 훅의 구조
 
-```json package.json
+훅은 이벤트, 그 이벤트 가운데 어떤 경우에 실행할지 정하는 매처, 실행할 핸들러로 이루어집니다. 프로젝트의 훅은 `.codex/hooks.json`에 두며, 신뢰한 프로젝트의 훅만 실행됩니다. [@05] 이 장에서 쓰는 이벤트는 두 가지입니다.
+
+| 이벤트 | 실행 시점 | 할 수 있는 일 |
+|---|---|---|
+| `PreToolUse` | Bash 명령, `apply_patch`를 통한 파일 수정, MCP 도구 호출을 실행하기 전 | `permissionDecision: "deny"`로 그 호출을 막고 이유를 돌려준다 |
+| `Stop` | 턴을 마치기 전 | `decision: "block"`으로 턴을 끝내지 않고, `reason`을 새 프롬프트로 삼아 작업을 이어 가게 한다 |
+
+훅은 표준 입력으로 JSON 하나를 받습니다. `PreToolUse`라면 `tool_name`과 `tool_input`이 들어 있고, 파일 수정이면 `tool_name`이 `apply_patch`, 패치 본문은 `tool_input.command`입니다. `Stop`에는 이 턴이 이미 `Stop` 훅 때문에 이어진 적이 있는지 알려 주는 `stop_hook_active`가 들어 있습니다. [@05]
+
+### 예시 1: 레거시 엔드포인트의 수정을 막습니다
+
+<p class="keep-with-next">서론의 Codex는 <code>GET /api/v2/users/:id</code>의 핸들러를 고쳤습니다. 레거시 엔드포인트의 파일을 고치려는 순간 막고, 어디를 고쳐야 하는지 알려 주는 훅입니다.</p>
+
+```bash .codex/hooks/guard-legacy.sh
+#!/usr/bin/env bash
+# PreToolUse(apply_patch): 레거시 사용자 조회 엔드포인트의 파일 수정을 막는다.
+set -euo pipefail
+patch=$(jq -r '.tool_input.command // ""')
+
+if grep -Eq 'src/(api/v2/users|profile)/' <<<"$patch"; then
+  jq -n '{hookSpecificOutput: {
+    hookEventName: "PreToolUse",
+    permissionDecision: "deny",
+    permissionDecisionReason: "레거시 사용자 조회 엔드포인트입니다. 정식 엔드포인트는 GET /users/:id(src/legacy/users.controller.ts)입니다. AGENTS.md를 확인하세요."
+  }}'
+fi
+```
+
+이 훅은 스킬이 선택되지 않은 작업에서도 작동합니다. 막힌 Codex는 이유에 적힌 정식 엔드포인트로 대상을 바꿉니다. 스킬의 1·2단계가 판단으로 찾아내야 했던 것을, 훅은 금지로 강제합니다. 다만 어느 엔드포인트가 정식인지는 여전히 `AGENTS.md`에 적힌 사실이고, 훅은 그 사실을 어기는 수정을 막을 뿐입니다.
+
+### 예시 2: 검증 없이 작업을 마치지 못하게 합니다
+
+<p class="keep-with-next">턴을 마치기 전에 계약 테스트를 실행하고, 실패하면 실패 내용을 프롬프트로 돌려줘 작업을 이어 가게 하는 훅입니다.</p>
+
+```bash .codex/hooks/verify-before-stop.sh
+#!/usr/bin/env bash
+# Stop: 턴을 마치기 전에 GET /users/:id 계약 테스트를 실행한다.
+# 실패하면 한 번은 실패 내용과 함께 작업을 이어 가게 하고, 두 번째에는 멈추게 둔다.
+set -uo pipefail
+input=$(cat)
+cd "$(git rev-parse --show-toplevel)"
+
+if git diff --quiet HEAD -- src/; then
+  echo '{}'    # 서버 코드를 바꾸지 않은 턴은 검사하지 않는다
+  exit 0
+fi
+if out=$(pnpm test:contract 2>&1); then
+  echo '{}'
+  exit 0
+fi
+if [ "$(jq -r '.stop_hook_active' <<<"$input")" = "true" ]; then
+  echo '{}'    # 이미 한 번 이어 갔으므로 같은 실패로 반복하지 않는다
+  exit 0
+fi
+jq -n --arg log "$(tail -n 20 <<<"$out")" \
+  '{decision: "block", reason: ("계약 테스트가 실패했습니다. 실패 내용을 보고 원인을 고친 뒤 다시 확인하세요.\n" + $log)}'
+```
+
+3장의 루프에서는 Codex가 스스로 `verify.sh`를 실행하고 실패 메시지를 읽었습니다. 이 훅은 그 루프의 한 바퀴를 Codex의 판단과 상관없이 돌게 합니다. 실패하면 실패 내용이 다음 프롬프트가 되기 때문입니다. `stop_hook_active`로 두 번째 실패에서는 막지 않는 것은, 3장에서 스킬에 넣은 “같은 실패가 두 번 나오면 멈춘다”를 훅에서도 지키기 위해서입니다. 서버 코드를 바꾸지 않은 턴에서 검사를 건너뛰는 것은 4장의 Efficiency, 곧 비용 때문입니다.
+
+<p class="keep-with-next">두 훅을 등록하는 설정입니다. 경로는 공식 문서의 권장대로 git 루트를 기준으로 씁니다. [@05]</p>
+
+```json .codex/hooks.json
 {
-  "scripts": {
-    "typecheck": "tsc --noEmit",
-    "test": "vitest run",
-    "verify": "pnpm typecheck && pnpm test"
+  "description": "사용자 조회 API 작업의 검증 훅",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "^apply_patch$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$(git rev-parse --show-toplevel)/.codex/hooks/guard-legacy.sh\"",
+            "statusMessage": "레거시 엔드포인트 수정 여부 확인"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$(git rev-parse --show-toplevel)/.codex/hooks/verify-before-stop.sh\"",
+            "timeout": 300,
+            "statusMessage": "계약 테스트 실행"
+          }
+        ]
+      }
+    ]
   }
 }
 ```
 
-위 `package.json` 예시는 `typescript`, `vitest` 등 의존성과 설정이 존재한다는 전제가 있어야 동작합니다. 중요한 것은 `verify`라는 명령의 이름이 아니라 **Codex가 실행한 검사와 팀의 병합 기준이 같은 근거를 사용하도록 만드는 것**입니다.
+### 스킬, 훅, CI가 맡는 일
 
-### 경험은 어디에 남겨야 할까요?
+훅이 생겼다고 다른 장치가 필요 없어지지는 않습니다. 2장에서 `verify.sh`는 에이전트가 실행할 때만 의미가 있으므로, 반드시 지켜야 하는 검사는 같은 검사를 CI에도 두어 병합 전에 판정하게 한다고 했습니다. 스킬, 훅, CI가 맡는 일을 나란히 놓으면 다음과 같습니다.
 
-Reflexion은 실패의 교훈을 언어적 기억으로 다음 시도에 전달하는 접근을, ACE는 작업 경험에 따라 플레이북을 점진적으로 갱신하는 접근을 연구합니다. [@14][@15] 이들은 지속적 개선의 다양한 형태를 보여주지만, 장기 메모리 데이터베이스를 모든 팀에 도입해야 한다는 뜻은 아닙니다.
+| | 스킬 | 훅 | CI |
+|---|---|---|---|
+| 작동 조건 | 선택되고 제대로 읽혀야 한다 | 이벤트가 일어나면 항상 | PR마다 항상 |
+| 작동 시점 | 작업 중 | 작업 중 (도구 실행 전후, 턴 종료) | 병합 전 |
+| 잘 맞는 일 | 판단이 필요한 절차 | 매번 같은 방식으로 지킬 검사와 금지 | 최종 판정 |
+| 이 사례에서 | 화면에서 출발해 대상을 확정한다 | 레거시 수정 차단, 종료 전 계약 테스트 | `GET /users/:id` 계약 테스트 |
 
-한 번 있었던 특이한 장애는 이슈로 기록할 수 있습니다. 재사용되는 지식은 참조 문서에, 반복 가능한 작업 절차는 스킬에, 반드시 위반을 차단할 조건은 테스트·린트·CI에 남길 수 있습니다. **무엇을 저장하느냐보다 무엇을 재사용할 때 유효한가가 중요합니다.**
+판단이 필요한 일을 훅으로 옮기면 안 됩니다. 요청이 어느 화면에서 왔는지 찾는 일은 스크립트로 정할 수 없으므로 스킬에 남깁니다. 반대로 매번 같은 방식으로 지켜야 하는 일을 스킬에만 두면, 4장에서처럼 스킬이 선택되지 않거나 잘못 읽힐 때 함께 빠집니다.
+
+> [!주의]
+> 공식 문서는 도구 훅을 “완전한 강제 경계가 아니라 유용한 안전장치”로 다루라고 합니다. 웹 검색 같은 호스팅 도구는 `PreToolUse`와 `PostToolUse`로 가로챌 수 없고, 같은 이벤트에 걸린 훅 여러 개는 동시에 실행되며, 프로젝트의 훅은 사용자가 검토하고 신뢰해야 실행됩니다. [@05] 그래서 훅이 있어도 같은 계약 테스트를 CI에 두고, 최종 판정은 CI가 맡습니다.
