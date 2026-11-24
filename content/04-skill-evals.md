@@ -6,7 +6,7 @@ title: 스킬의 품질을 평가하려면 독립적인 기준이 필요합니�
 
 ### 스킬의 한 줄은 이후의 작업 전부에 영향을 줍니다
 
-3장에서 스킬의 '실패했을 때' 항목에 세 줄을 추가했습니다. 루프 한 번에서 얻은 교훈을 남긴 것이니 좋은 변경처럼 보입니다. 하지만 스킬은 그 작업 한 번이 아니라, 앞으로 `description`에 맞는 모든 작업에서 읽힙니다. 고친 한 줄은 좋은 쪽이든 나쁜 쪽이든 이후의 작업 전부에 영향을 줍니다.
+3장에서 스킬의 '실패했을 때' 항목에 세 항목을 추가했습니다. 루프 한 번에서 얻은 교훈을 남긴 것이니 좋은 변경처럼 보입니다. 하지만 스킬은 그 작업 한 번이 아니라, 앞으로 `description`에 맞는 모든 작업에서 읽힙니다. 고친 한 줄은 좋은 쪽이든 나쁜 쪽이든 이후의 작업 전부에 영향을 줍니다.
 
 좋아 보이는 변경이 실제로도 좋다는 보장은 없습니다. 스킬은 코드처럼 컴파일되지 않고 실행할 때마다 해석되므로, 부작용은 문장을 읽어서는 보이지 않고 실행해 봐야 드러납니다. 시간이 지나며 달라지기도 합니다. 이전 모델에는 테스트를 실행하라고 독려하는 지침이 필요했지만, 스스로 테스트하는 모델에서는 같은 지침이 불필요한 테스트로 이어질 수 있습니다. [@07]
 
@@ -20,7 +20,7 @@ title: 스킬의 품질을 평가하려면 독립적인 기준이 필요합니�
 
 3장 끝의 스킬을 v2라고 부르겠습니다. v2를 쓰기 시작한 뒤, 스킬이 가장 잘 처리해야 할 요청에서 문제가 생겼습니다.
 
-<p class="keep-with-next">요청은 “사용자 조회 응답에 lastLoginAt을 추가해 줘”였고, Codex의 보고는 다음과 같았습니다.</p>
+<p class="keep-with-next">요청은 “설정 화면에 마지막 로그인 시각이 보이도록 사용자 조회 응답에 lastLoginAt을 추가해 줘”였고, Codex의 보고는 다음과 같았습니다.</p>
 
 ```text Codex의 보고
 users.controller.test.ts의 기존 기대값을 바꿔야 테스트가 통과합니다.
@@ -52,11 +52,11 @@ OpenAI는 스킬 평가를 프롬프트, 그 프롬프트로 실행한 기록, �
 | 축 | 묻는 것 | 판정 근거 | 1장의 품질 차원 |
 |---|---|---|---|
 | Outcome | 요구사항을 충족했나 | 실행이 끝난 뒤 채점기가 따로 돌리는 과제별 검사 | Correctness, Regression Safety |
-| Process | 정해진 절차를 따랐나 | 실행 기록에서 마지막 `verify.sh` 실행이 성공했는가 | Process Consistency |
+| Process | 정해진 절차를 따랐나 | 끝까지 수행할 과제는 마지막 `verify.sh` 실행이 성공했는가, 멈춰야 할 과제는 변경 없이 보고했는가 | Process Consistency |
 | Invocation | 써야 할 때만 스킬을 썼나 | `should_trigger`와 실제 사용 여부가 일치하는가 | 해당 없음 |
 | Efficiency | 비용이 적절한가 | 토큰 사용량, 명령 실행 횟수 | Cost |
 
-검사는 결정적인 것부터 둡니다. 명령이 성공했는지, 토큰을 얼마나 썼는지, 같은 명령을 몇 번 되풀이했는지는 실행 기록에서 바로 셀 수 있습니다. [@03] 완료 보고가 충실한지처럼 정답이 하나가 아닌 항목에는 모델 검토를 보조로 쓸 수 있지만, 모델 검토기는 오탐이 많습니다. 저장소에 접근하고 코드를 실행할 수 있게 하면 오탐이 줄어듭니다. [@13] 스킬이 쓰였는지를 기록에서 가려내는 방법은 공식 글에 나와 있지 않으므로, 이 자료에서는 스킬에만 있는 행동인 `scripts/verify.sh` 실행이 기록에 남았는지로 판정합니다.
+검사는 결정적인 것부터 둡니다. 명령이 성공했는지, 토큰을 얼마나 썼는지, 같은 명령을 몇 번 되풀이했는지는 실행 기록에서 바로 셀 수 있습니다. [@03] 완료 보고가 충실한지처럼 정답이 하나가 아닌 항목에는 모델 검토를 보조로 쓸 수 있지만, 모델 검토기는 오탐이 많습니다. 저장소에 접근하고 코드를 실행할 수 있게 하면 오탐이 줄어듭니다. [@13] 스킬이 쓰였는지를 기록에서 가려내는 방법은 공식 글에 나와 있지 않으므로, 이 자료에서는 스킬에만 있는 파일, 곧 `scripts/verify.sh`나 `references/compatibility.md`를 쓴 흔적이 기록에 남았는지로 판정합니다.
 
 ### 평가 과제를 만들고 돌립니다
 
@@ -64,10 +64,10 @@ OpenAI는 스킬 평가를 프롬프트, 그 프롬프트로 실행한 기록, �
 
 ```csv evals/api-response-change.csv
 id,should_trigger,fixture,prompt
-t1,true,single-endpoint,사용자 조회 응답에 lastLoginAt을 추가해 줘
+t1,true,single-endpoint,설정 화면에 마지막 로그인 시각이 보이도록 사용자 조회 응답에 lastLoginAt을 추가해 줘
 t2,true,duplicate-endpoints,프로필 화면에 이미지가 보이도록 사용자 조회 API에 avatarUrl을 추가해 줘
 t3,true,missing-column,프로필 화면에 이미지가 보이도록 사용자 조회 API에 avatarUrl을 추가해 줘
-t4,true,single-endpoint,사용자 조회 응답의 name을 displayName으로 바꿔 줘
+t4,true,single-endpoint,프로필 화면에서 쓰도록 사용자 조회 응답의 name을 displayName으로 바꿔 줘
 n1,false,single-endpoint,README의 오탈자를 고쳐 줘
 n2,false,single-endpoint,users.controller.ts의 중복 코드를 함수로 추출해 줘. 응답은 바꾸지 않는다
 ```
@@ -129,12 +129,14 @@ dir="$1"; trace="$dir/trace.jsonl"
 commands='[.[] | select(.type == "item.completed") | .item | select(.type == "command_execution")]'
 
 process=$(jq -s "$commands | map(select(.command | test(\"scripts/verify.sh\"))) | (last // {}) | .exit_code == 0" "$trace")
-invoked=$(jq -s "$commands | any(.command | test(\"scripts/verify.sh\"))" "$trace")
+invoked=$(jq -s "$commands | any(.command | test(\"scripts/verify.sh|references/compatibility.md\"))" "$trace")
 count=$(jq -s "$commands | length" "$trace")
 tokens=$(jq -s '[.[] | select(.type == "turn.completed") | .usage.input_tokens + .usage.output_tokens] | add' "$trace")
 
 echo "$(basename "$dir") outcome=$(cat "$dir/outcome") process=$process invoked=$invoked commands=$count tokens=$tokens"
 ```
+
+이 스크립트의 `process`는 끝까지 수행해야 하는 과제를 위한 값입니다. t4처럼 멈추는 것이 정답인 과제는 `verify.sh`를 실행하지 않으므로, Process도 과제별 검사, 곧 변경 없이 보고했는지로 판정합니다.
 
 > [!주의]
 > 실행 기록은 판정의 근거일 뿐 판정 자체가 아닙니다. 기록에 `verify.sh` 성공이 남아 있어도 Outcome은 채점기가 따로 실행한 과제별 검사로 판정합니다. 서론의 Codex처럼 에이전트가 엉뚱한 대상을 검증하고 통과했을 수 있기 때문입니다.
@@ -161,7 +163,7 @@ echo "$(basename "$dir") outcome=$(cat "$dir/outcome") process=$process invoked=
    단계를 근거로 원인의 범위를 좁힌 뒤 실제 값을 확인하고 고친다.
  - 기존 필드의 테스트 기대값을 바꾸거나 지워야 통과한다면 바꾸지 말고 보고한다.
 +  새 필드를 기대값에 추가하는 것은 여기에 해당하지 않는다.
- - 같은 실패 메시지가 두 번 연속 나오면 멈추고 지금까지의 시도를 보고한다.
+ - 다시 진단하고 고쳐도 같은 실패 메시지가 나오면 멈추고 지금까지의 시도를 보고한다.
 ```
 
 새 규칙을 덧붙이지 않고, 기존 규칙에 예외 한 줄을 더해 범위를 분명히 했습니다. 스킬의 복잡도는 결과가 실제로 나아질 때만 늘리는 편이 좋습니다. [@08] 고친 뒤에는 같은 과제로 다시 평가합니다. 생성과 평가를 반복하는 방식은 평가 기준이 분명하고 반복할수록 측정 가능한 개선이 있을 때 효과적입니다. [@08]

@@ -4,11 +4,11 @@ num: "01"
 title: 코드를 만들었다는 사실과 잘 만들었다는 증거
 ---
 
-에이전트의 최종 메시지는 작업의 요약이지 실행 결과가 아닙니다. 서론의 보고는 네 문장이었지만, 각 문장이 기대는 근거와 그 근거가 증명하는 범위는 모두 다릅니다. 이 장에서는 그 장면을 저장소 수준에서 다시 보고, 보고 속의 **증거와 증거처럼 보이는 주장**을 나눠 봅니다.
+에이전트의 최종 메시지는 작업의 요약이지 실행 결과가 아닙니다. 서론의 보고는 세 문장이었지만, 각 문장이 기대는 근거와 그 근거가 증명하는 범위는 모두 다릅니다. 이 장에서는 그 장면을 저장소 수준에서 다시 보고, 보고 속의 **증거와 증거처럼 보이는 주장**을 나눠 봅니다.
 
 ### 저장소에서 실제로 일어난 일
 
-라우터에는 사용자 정보를 돌려주는 엔드포인트가 세 개 등록되어 있습니다. 셋 모두 같은 사용자 저장소를 읽습니다.
+라우터에는 사용자 정보를 돌려주는 엔드포인트가 세 개 등록되어 있습니다. 셋 모두 같은 `users` 테이블을 읽지만, 조회 코드는 엔드포인트마다 따로 있습니다.
 
 ```ts src/routes.ts
 router.get('/users/:id', usersController.getUser);
@@ -28,7 +28,7 @@ export function fetchUser(id: string) {
 
 ```diff src/api/v2/users.handler.ts
  export async function getUser(req: Request, res: Response) {
-   const user = await userRepository.findById(req.params.id);
+   const user = await usersV2Repository.findById(req.params.id);
    res.json({
      id: user.id,
      name: user.name,
