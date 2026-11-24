@@ -46,6 +46,12 @@ button { font: inherit; }
 .identity-name { font-size:12px; letter-spacing:.13em; font-weight:800; text-transform:uppercase; color:#374c50; }
 .identity-desc { color:var(--faint); font-size:12px; white-space: nowrap; }
 .topbar-end { display:flex;align-items:center;gap:14px; }
+.page-switch { display:flex; gap:2px; padding:3px; border:1px solid var(--hairline); border-radius:6px; background:#fff; }
+.page-switch a { padding:5px 10px; border-radius:4px; font-size:12px; font-weight:700; color:var(--muted); text-decoration:none; }
+.page-switch a:hover { color:var(--accent); }
+.page-switch a[aria-current="page"] { background:var(--accent-pale); color:var(--accent); }
+.see-also { margin-top:14px !important; font-size:12px; color:var(--muted); }
+.see-also a { font-weight:700; }
 .page-count { font: 700 11px var(--font-mono); letter-spacing:.06em; color:var(--muted); }
 .print-action { border:1px solid var(--hairline);background:transparent;color:var(--text);border-radius:5px;padding:8px 12px;font-size:12px;cursor:pointer; }
 .print-action:hover {border-color:#86a9a7;}
@@ -195,6 +201,18 @@ code:not(pre code) { font:.87em var(--font-mono); color:#1e5862; background:#eaf
 .tier code { font-size:.92em; }
 .tier-figure .diagram-note { grid-column:1 / -1; margin:2px 1px 0 !important; }
 
+/* 핵심 카드: 요약 노트에서 절 하나의 주장을 제목과 한 줄로 보여 준다. */
+.cards { display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; margin:14px 0 18px; }
+.cards.cols-2 { grid-template-columns:repeat(2, 1fr); }
+.cards.cols-4 { grid-template-columns:repeat(4, 1fr); }
+.card { padding:11px 13px 12px; background:#f6f9f8; border-top:3px solid #6e9a96; border-radius:0 0 4px 4px; }
+.card.accent { border-top-color:var(--accent); background:var(--accent-pale); }
+.card.warn { border-top-color:var(--warning); background:var(--warning-pale); }
+.card-kicker { display:block; font-size:9.5px; font-weight:800; letter-spacing:.08em; color:#718b8b; margin-bottom:4px; }
+.card strong { display:block; font-size:13px; line-height:1.4; color:#2e4c53; margin-bottom:4px; word-break:keep-all; }
+.card span:not(.card-kicker) { display:block; font-size:11px; line-height:1.55; color:#5d7176; word-break:keep-all; }
+.card code { font-size:.92em; }
+
 /* References & document end */
 .article .reference-entry { padding:6px 0; margin:0; border-bottom:1px solid #e5eae8; font-size:12px; line-height:1.7; }
 .reference-entry a { font-size:11px; overflow-wrap:anywhere; }
@@ -216,6 +234,7 @@ code:not(pre code) { font:.87em var(--font-mono); color:#1e5862; background:#eaf
 @media(max-width:620px) {
   .topbar-inner { padding:0 16px; }
   .identity-desc { display:none; }
+  .page-count { display:none; }
 }
 
 /* Print: 화면의 시트를 그대로 한 장씩 출력한다. */

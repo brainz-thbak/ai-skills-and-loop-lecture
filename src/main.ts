@@ -4,7 +4,7 @@ import './style.css';
 // 섹션마다 새 시트에서 시작하고, 넘치는 블록은 다음 시트로 보낸다.
 // 문단·목록·표·코드는 시트 경계에서 쪼갤 수 있고, 그 밖의 블록(그림)은 통째로 옮긴다.
 // JS 가 꺼져 있으면 #source 가 한 장의 긴 종이로 그대로 보인다.
-const DOC_TITLE = '스킬과 피드백 루프로 품질 높이기';
+const DOC_TITLE = document.body.dataset.docTitle ?? '스킬과 피드백 루프로 품질 높이기';
 const SHEET_PX = (210 * 96) / 25.4;
 const MIN_LINES = 2;
 const MIN_CODE_LINES = 3;

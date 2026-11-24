@@ -1,9 +1,9 @@
 import { readdirSync, readFileSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { basename, join, resolve } from 'node:path';
 import { Marked, type Tokens } from 'marked';
 import type { Plugin } from 'vite';
 
-// content/*.md 를 파일 이름 순서대로 읽어 index.html 의 자리표시자를 채운다.
+// 페이지마다 지정한 원고 폴더의 *.md 를 파일 이름 순서대로 읽어 그 HTML의 자리표시자를 채운다.
 //   <!-- lecture:toc -->      목차 링크 (데스크톱·모바일 목차 양쪽)
 //   <!-- lecture:sections --> 각 장의 <section class="doc-section">
 //
@@ -150,17 +150,19 @@ function renderSections(chapters: Chapter[]): string {
     .join('\n');
 }
 
-export function lectureContent(contentDir = 'content'): Plugin {
-  let dir = contentDir;
+// pages: HTML 파일 이름 → 그 페이지의 원고 폴더. 목록에 없는 HTML은 그대로 둔다.
+export function lectureContent(pages: Record<string, string> = { 'index.html': 'content' }): Plugin {
+  let root = process.cwd();
+  const dirs = (): string[] => Object.values(pages).map((d) => resolve(root, d));
   return {
     name: 'lecture-content',
     configResolved(config) {
-      dir = resolve(config.root, contentDir);
+      root = config.root;
     },
     configureServer(server) {
-      server.watcher.add(dir);
+      for (const dir of dirs()) server.watcher.add(dir);
       const reload = (file: string) => {
-        if (file.startsWith(dir)) server.ws.send({ type: 'full-reload' });
+        if (dirs().some((dir) => file.startsWith(dir))) server.ws.send({ type: 'full-reload' });
       };
       server.watcher.on('change', reload);
       server.watcher.on('add', reload);
@@ -168,8 +170,10 @@ export function lectureContent(contentDir = 'content'): Plugin {
     },
     transformIndexHtml: {
       order: 'pre',
-      handler(html) {
-        const chapters = loadChapters(dir);
+      handler(html, ctx) {
+        const contentDir = pages[basename(ctx.filename)];
+        if (!contentDir) return html;
+        const chapters = loadChapters(resolve(root, contentDir));
         return html
           .replaceAll('<!-- lecture:toc -->', renderToc(chapters))
           .replace('<!-- lecture:sections -->', renderSections(chapters));
