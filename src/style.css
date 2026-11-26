@@ -47,6 +47,7 @@ button { font: inherit; }
 .identity-desc { color:var(--faint); font-size:12px; white-space: nowrap; }
 .topbar-end { display:flex;align-items:center;gap:14px; }
 .page-switch { display:flex; gap:2px; padding:3px; border:1px solid var(--hairline); border-radius:6px; background:#fff; }
+.page-switch a,.print-action { white-space:nowrap; }
 .page-switch a { padding:5px 10px; border-radius:4px; font-size:12px; font-weight:700; color:var(--muted); text-decoration:none; }
 .page-switch a:hover { color:var(--accent); }
 .page-switch a[aria-current="page"] { background:var(--accent-pale); color:var(--accent); }
@@ -231,10 +232,16 @@ code:not(pre code) { font:.87em var(--font-mono); color:#1e5862; background:#eaf
   #mobile-toc nav a { font-size:12px; text-decoration:none; padding:7px 0; }
   :root { --sheet-gap:16px; }
 }
+@media(max-width:740px) { .identity-desc { display:none; } }
 @media(max-width:620px) {
   .topbar-inner { padding:0 16px; }
-  .identity-desc { display:none; }
   .page-count { display:none; }
+}
+@media(max-width:480px) {
+  .topbar { height:auto; }
+  .topbar-inner { flex-wrap:wrap; row-gap:8px; padding-block:10px; }
+  .topbar-end { width:100%; justify-content:space-between; gap:8px; }
+  .page-switch a { padding-inline:8px; }
 }
 
 /* Print: 화면의 시트를 그대로 한 장씩 출력한다. */

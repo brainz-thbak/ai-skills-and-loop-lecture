@@ -1,8 +1,23 @@
+---
+title: 스킬 설계와 평가 가이드
+document_type: guide
+description: >-
+  개발 작업용 SKILL.md를 작성하고, 작업 중 검증 루프와 스킬 자체의
+  평가·개선 루프를 설계할 때 참고하는 가이드.
+language: ko
+source:
+  title: 스킬과 피드백 루프로 품질 높이기
+  url: https://brainz-thbak.github.io/ai-skills-and-loop-lecture/
+  chapters: [2, 3, 4]
+---
+
 # 스킬 설계와 평가 가이드
 
 반복할 개발 작업을 `SKILL.md`로 정의하고, 작업 중 검증에 실패했을 때의 피드백 루프를 설계한다. 별도의 평가 과제로 스킬의 효과를 확인하고, 관찰된 실패를 근거로 스킬을 개선한다.
 
 가이드를 AI에 줄 때는 실제 요청의 예시, 작업 대상 저장소, 이미 쓰는 검증 명령을 함께 제공한다. 결과물에는 `SKILL.md`, 작업 중 실패 대응 절차, 평가 과제와 채점 기준, 스킬 수정과 재평가 절차를 포함한다.
+
+평가 과제 파일, 실행기, 채점기까지 만들려면 [스킬 설계와 평가 상세 가이드](./skill-design-guide-detailed.md)를 읽는다.
 
 ## 스킬을 작업 프로토콜로 작성한다
 
