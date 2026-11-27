@@ -245,6 +245,7 @@ async function paginate(): Promise<void> {
   });
   pageCount.textContent = `A4 · ${sheets.length}쪽`;
   fitSheets();
+  document.getElementById(location.hash.slice(1))?.scrollIntoView({ behavior: 'instant' });
   refreshReadingState();
 }
 

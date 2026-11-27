@@ -63,6 +63,39 @@ toc: 참고 문헌
 <p class="reference-entry" id="ref-19"><strong><a class="cite" href="#ref-19">[19]</a> Agent Skills.</strong> <em>Specification.</em><br/>
 <a href="https://agentskills.io/specification" rel="noopener noreferrer" target="_blank">https://agentskills.io/specification</a></p>
 
+<p class="reference-entry" id="ref-20"><strong><a class="cite" href="#ref-20">[20]</a> Vitor Domingos.</strong> <em>Skills are all you need — Developer Guide.</em> Hitachi Digital Services, 2026.<br/>
+<a href="https://www.hitachids.com/wp-content/uploads/CAAI/Whitepaper-Skills_are_all_you_need-Dev.pdf" rel="noopener noreferrer" target="_blank">https://www.hitachids.com/wp-content/uploads/CAAI/Whitepaper-Skills_are_all_you_need-Dev.pdf</a></p>
+
+<p class="reference-entry" id="ref-21"><strong><a class="cite" href="#ref-21">[21]</a> Anthropic.</strong> <em>Demystifying evals for AI agents.</em> 2026.<br/>
+<a href="https://www.anthropic.com/research/demystifying-evals-for-ai-agents" rel="noopener noreferrer" target="_blank">https://www.anthropic.com/research/demystifying-evals-for-ai-agents</a></p>
+
+<p class="reference-entry" id="ref-22"><strong><a class="cite" href="#ref-22">[22]</a> OpenTelemetry.</strong> <em>Handling sensitive data.</em><br/>
+<a href="https://opentelemetry.io/docs/security/handling-sensitive-data/" rel="noopener noreferrer" target="_blank">https://opentelemetry.io/docs/security/handling-sensitive-data/</a></p>
+
+<p class="reference-entry" id="ref-23"><strong><a class="cite" href="#ref-23">[23]</a> Agent Skills.</strong> <em>Evaluating skill output quality.</em><br/>
+<a href="https://agentskills.io/skill-creation/evaluating-skills" rel="noopener noreferrer" target="_blank">https://agentskills.io/skill-creation/evaluating-skills</a></p>
+
+<p class="reference-entry" id="ref-24"><strong><a class="cite" href="#ref-24">[24]</a> Agent Skills.</strong> <em>Optimizing skill descriptions.</em><br/>
+<a href="https://agentskills.io/skill-creation/optimizing-descriptions" rel="noopener noreferrer" target="_blank">https://agentskills.io/skill-creation/optimizing-descriptions</a></p>
+
+<p class="reference-entry" id="ref-25"><strong><a class="cite" href="#ref-25">[25]</a> OpenAI.</strong> <em>Codex OpenTelemetry — Skill invocation logs.</em><br/>
+<a href="https://github.com/openai/codex/blob/rust-v0.172.0/codex-rs/otel/README.md#skill-invocation-logs" rel="noopener noreferrer" target="_blank">https://github.com/openai/codex/blob/rust-v0.172.0/codex-rs/otel/README.md#skill-invocation-logs</a></p>
+
+<p class="reference-entry" id="ref-26"><strong><a class="cite" href="#ref-26">[26]</a> OpenAI.</strong> <em>Codex Advanced Configuration — Observability and telemetry.</em><br/>
+<a href="https://learn.chatgpt.com/docs/config-file/config-advanced#observability-and-telemetry" rel="noopener noreferrer" target="_blank">https://learn.chatgpt.com/docs/config-file/config-advanced#observability-and-telemetry</a></p>
+
+<p class="reference-entry" id="ref-27"><strong><a class="cite" href="#ref-27">[27]</a> Matsukura Yuki.</strong> <em>社内Agent Skillsの構築、運用、改善サイクル。半年運用して作り直したプラクティス 🧰.</em> Minedia Tech Blog, 2026.<br/>
+<a href="https://zenn.dev/minedia/articles/internal-agent-skills-lifecycle" rel="noopener noreferrer" target="_blank">https://zenn.dev/minedia/articles/internal-agent-skills-lifecycle</a></p>
+
+<p class="reference-entry" id="ref-28"><strong><a class="cite" href="#ref-28">[28]</a> OpenAI.</strong> <em>Evaluation best practices.</em><br/>
+<a href="https://developers.openai.com/api/docs/guides/evaluation-best-practices" rel="noopener noreferrer" target="_blank">https://developers.openai.com/api/docs/guides/evaluation-best-practices</a></p>
+
+<p class="reference-entry" id="ref-29"><strong><a class="cite" href="#ref-29">[29]</a> Hamel Husain &amp; Shreya Shankar.</strong> <em>AI Evals: Everything You Need to Know.</em> Error Analysis &amp; Data Collection.<br/>
+<a href="https://hamel.dev/blog/posts/evals-faq/index.html" rel="noopener noreferrer" target="_blank">https://hamel.dev/blog/posts/evals-faq/index.html</a></p>
+
+<p class="reference-entry" id="ref-30"><strong><a class="cite" href="#ref-30">[30]</a> OpenAI.</strong> <em>Codex CLI 0.172.0.</em> <code>codex exec</code>의 표준 오류 로그 설정.<br/>
+<a href="https://github.com/openai/codex/blob/rust-v0.172.0/codex-rs/exec/src/lib.rs#L270-L276" rel="noopener noreferrer" target="_blank">https://github.com/openai/codex/blob/rust-v0.172.0/codex-rs/exec/src/lib.rs#L270-L276</a></p>
+
 <p><small>참고 문헌은 공식 도구 문서, 실무 사례, 학술 연구를 구분하여 사용했습니다. 연구에서 보고한 개선 수치를 현재 Codex의 일반적인 성공률로 환산하지 않습니다.</small></p>
 
 <footer class="footer"><span>스킬과 피드백 루프로 품질 높이기 · 강의 노트</span><span>가상의 개발 사례는 설명을 위한 예시이며 실제 성능 측정 결과가 아닙니다.</span></footer>

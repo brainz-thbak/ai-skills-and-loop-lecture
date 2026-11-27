@@ -3,7 +3,7 @@ title: 스킬 설계와 평가 상세 가이드
 document_type: guide
 description: >-
   AI 에이전트가 저장소에 맞는 SKILL.md와 작업 중 검증 루프를 설계하고,
-  독립적인 평가 과제, 실행기, 채점기, 재평가 절차를 만드는 데 쓰는 상세 가이드.
+  실사용 기록에서 독립적인 평가 과제와 채점 기준을 만들고 재평가하는 데 쓰는 상세 가이드.
 language: ko
 source:
   title: 스킬과 피드백 루프로 품질 높이기
@@ -306,7 +306,113 @@ python3 evals/grade.py evals/runs/tuning-a evals/runs/tuning-b
 
 비교 전에 `(과제 ID, 초기 커밋, 모델, CLI 버전, 반복 횟수)`가 일치하는지 확인한다. 과제별로 통과 수와 전체 실행 수를 함께 보고하고 `run-error`와 발동 미확인을 명시한다. 한 조건에서 실행 오류가 반복되면 환경을 진단하고 동일한 조건에서 다시 실행한다. 기대했던 과제나 반복 기록이 빠졌으면 비교를 보류한다.
 
-## 6. 근거가 있는 규칙을 고치고 재평가한다
+## 6. 실사용 기록으로 평가 기준을 보강한다
+
+1. 스킬이 필요했던 요청을 기준으로 호출 기록, 실행 과정, 독립 검사 결과를 한 건씩 연결한다. 실행별 스킬 버전과 초기 저장소 상태를 함께 기록한다.
+2. 기대한 행동과 실제 행동이 처음 갈라진 지점을 적는다. 예를 들어 `add-login`에서 스킬 호출은 확인됐고 새 필드를 테스트 기대값에 추가하려다 멈췄다면, 본문의 중단 규칙을 점검한다.
+3. 반복되거나 영향이 큰 실패를 재현할 과제를 고른다. 프롬프트와 초기 상태를 고정하고 합격 조건을 독립 검사로 옮긴다. `add-login`에서는 실제 응답에 기대한 `lastLoginAt` 값이 들어가고, 그 필드의 테스트 기대값이 추가되며, 기존 필드 계약이 유지되는지 확인한다. 미호출이 확인된 요청에는 `should_trigger=true`를 부여하고 자동 선택을 다시 평가한다.
+
+### Codex 대화의 호출을 스킬별로 수집한다
+
+Codex CLI 0.172.0 기준 예시다. `codex.skill_invocation` 이벤트에 명시 지정은 `explicit`, 감지된 자동 사용은 `implicit`으로 기록된다. 사용자 설정인 `~/.codex/config.toml`에 아래 값을 넣는다. `CODEX_HOME`을 따로 지정했다면 그 아래의 `config.toml`을 사용한다. `[otel]`이 이미 있으면 두 키를 해당 블록 안에 넣는다. Codex와 수집기를 같은 컴퓨터에서 실행한다. [Codex 호출 로그](https://github.com/openai/codex/blob/rust-v0.172.0/codex-rs/otel/README.md#skill-invocation-logs) · [Codex 텔레메트리 설정](https://learn.chatgpt.com/docs/config-file/config-advanced#observability-and-telemetry)
+
+```toml
+[otel]
+log_user_prompt = false
+exporter = { otlp-http = { endpoint = "http://localhost:4318/v1/logs", protocol = "json" } }
+```
+
+프로젝트의 `.agents/skills/api-response-change/otel/collect-skill-calls.py`에 다음 코드를 저장한다. 수집기는 `otel/`의 상위 디렉터리 이름을 `skill.name`과 비교하고, 일치하는 호출을 스크립트 옆 `skill-calls.jsonl`에 추가한다.
+
+```python collect-skill-calls.py
+import json
+from http.server import BaseHTTPRequestHandler, HTTPServer
+from os import getenv
+from pathlib import Path
+
+OTEL_DIR = Path(__file__).resolve().parent
+SKILL_NAME = OTEL_DIR.parent.name
+LOG_PATH = OTEL_DIR / "skill-calls.jsonl"
+FIELDS = {
+    "event": "event.name",
+    "timestamp": "event.timestamp",
+    "conversation_id": "conversation.id",
+    "turn_id": "turn.id",
+    "skill_name": "skill.name",
+    "invocation_type": "skill.invocation_type",
+}
+
+
+class SkillLogReceiver(BaseHTTPRequestHandler):
+    def do_POST(self):
+        if self.path != "/v1/logs":
+            self.send_error(404)
+            return
+
+        try:
+            payload = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
+        except (TypeError, ValueError):
+            self.send_error(400, "Expected an OTLP JSON body")
+            return
+
+        for resource in payload.get("resourceLogs", []):
+            for scope in resource.get("scopeLogs", []):
+                for record in scope.get("logRecords", []):
+                    if record.get("eventName") != "codex.skill_invocation":
+                        continue
+                    attrs = {a["key"]: a["value"].get("stringValue")
+                             for a in record.get("attributes", [])}
+                    if attrs.get("skill.name") != SKILL_NAME:
+                        continue
+                    row = {field: attrs.get(key) for field, key in FIELDS.items()}
+                    with LOG_PATH.open("a", encoding="utf-8") as log:
+                        log.write(json.dumps(row, ensure_ascii=False) + "\n")
+
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.end_headers()
+        self.wfile.write(b"{}")
+
+
+with HTTPServer(("localhost", int(getenv("SKILL_LOG_PORT", "4318"))), SkillLogReceiver) as server:
+    server.serve_forever()
+```
+
+저장소 루트에서 수집기를 실행한다.
+
+```bash
+python3 .agents/skills/api-response-change/otel/collect-skill-calls.py
+```
+
+다른 터미널에서 같은 저장소의 Codex를 새로 시작한다. 코드 변경 없이 호출을 확인하려면 `codex --sandbox read-only`로 연다. 스킬 이름을 입력하지 않고 해당 스킬이 필요한 업무를 요청한 다음 `implicit` 이벤트를 확인한다. 전송은 일괄 처리되므로 수집 파일이 아직 없으면 잠시 기다리거나 Codex 채팅을 정상 종료한 뒤 확인한다.
+
+```bash
+jq -c 'select(.invocation_type == "implicit")' \
+	.agents/skills/api-response-change/otel/skill-calls.jsonl
+```
+
+수집 파일의 한 줄은 다음과 같다.
+
+```jsonl
+{"event":"codex.skill_invocation","timestamp":"2026-11-27T04:18:12.430Z","conversation_id":"604e64da-89a2-4846-a3c8-b39288f55f9b","turn_id":"7bd7ed77-37c6-4e00-bc56-abcb7917b85e","skill_name":"api-response-change","invocation_type":"implicit"}
+```
+
+같은 이름을 가진 스킬을 여러 저장소에서 수집할 때는 `SKILL_LOG_PORT`에 저장소별 포트를 지정하고, 각 Codex 실행의 `otel.exporter`에 같은 포트를 넣는다. 스킬 이름만으로 저장소를 구분할 수 없다.
+
+### 평가 실행과 호출 이벤트를 연결한다
+
+평가에는 CSV에 적힌 요청을 그대로 사용한다. 새 대화에서 실행한 과제는 `trace.jsonl`의 `thread.started.thread_id`를 호출 로그의 `conversation_id`에 대응시킨다. 다음 명령은 기준 버전의 첫 `add-login` 실행에서 대상 스킬이 감지된 기록을 찾는다.
+
+```bash
+trace=evals/runs/tuning-a/add-login/1/trace.jsonl
+conversation_id=$(jq -er 'select(.type == "thread.started") | .thread_id' "$trace")
+jq -c --arg id "$conversation_id" 'select(.conversation_id == $id)' \
+	.agents/skills/api-response-change/otel/skill-calls.jsonl
+```
+
+호출 여부는 `should_trigger`와 대조한다. 같은 턴에 `explicit`과 `implicit`이 함께 남을 수 있으므로 사용한 턴을 셀 때는 대화 ID, 턴 ID, 스킬 이름으로 묶는다. 이벤트가 없으면 수집기가 동작했는지와 스킬 고유 파일의 사용 흔적을 살핀다. 암시적 사용 감지는 일부 사용을 놓칠 수 있으므로 증거가 부족하면 미확인으로 둔다. 작업 성공은 기존 `evals/checks/` 검사로 따로 판정한다.
+
+## 7. 근거가 있는 규칙을 고치고 재평가한다
 
 1. 과제별 차이에서 반복되는 실패를 고른다. 예를 들어 `add-login`이 기존 응답에 필드를 추가하기 전에 멈췄다면, `answer.txt`, `trace.jsonl`과 독립 검사 결과에서 중단 이유를 확인한다.
 2. 그 판단을 유발한 지침을 수정한다. 이 예시에서는 기존 필드의 계약을 보존한다는 조건과, 새 필드의 기대값을 추가할 수 있다는 조건을 구체화한다.
@@ -319,3 +425,4 @@ python3 evals/grade.py evals/runs/tuning-a evals/runs/tuning-b
 - [강의 2장 · 스킬 설계](https://brainz-thbak.github.io/ai-skills-and-loop-lecture/#chapter-02)
 - [강의 3장 · 작업 중 피드백 루프](https://brainz-thbak.github.io/ai-skills-and-loop-lecture/#chapter-03)
 - [강의 4장 · 스킬 평가](https://brainz-thbak.github.io/ai-skills-and-loop-lecture/#chapter-04)
+- [강의 4장 · 실사용 기록에서 평가 기준 찾기](https://brainz-thbak.github.io/ai-skills-and-loop-lecture/#skill-operations)
